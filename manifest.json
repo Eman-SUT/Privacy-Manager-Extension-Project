@@ -3,22 +3,36 @@
   "name": "Privacy Manager",
   "version": "1.0",
   "description": "Trackers & Privacy Manager",
+
   "permissions": [
     "storage",
     "tabs",
     "cookies",
-    "webRequest",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "declarativeNetRequest"
   ],
+
   "host_permissions": [
     "http://127.0.0.1:5000/*",
     "<all_urls>"
   ],
+
   "action": {
     "default_popup": "popup.html"
   },
+
   "background": {
     "service_worker": "background.js"
+  },
+
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
   }
 }
