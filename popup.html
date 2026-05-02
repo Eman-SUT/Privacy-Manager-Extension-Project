@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Privacy Guard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      width: 260px;
+      padding: 10px;
+      background: linear-gradient(135deg, #f9f9f9, #e6f0ff);
+    }
+
+    h3 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .tab {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .tab button {
+      flex: 1;
+      margin: 2px;
+      padding: 8px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      background: #eee;
+      font-weight: bold;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .tab button:hover {
+      background: #d0d0ff;
+      transform: scale(1.05);
+    }
+
+    .section {
+      display: none;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    .active {
+      display: block;
+    }
+
+   
+    #trackers.active { background: #ffe5e5; }
+    #cookies.active { background: #fff0e0; }
+    #privacy.active { background: #e5ffe5; }
+    #gdpr.active { background: #e5f0ff; }
+  </style>
+</head>
+
+<body>
+
+  <h3>Privacy Guard</h3>
+
+<div class="tab">
+  <button id="btnTrackers">Trackers</button>
+  <button id="btnCookies">Cookies</button>
+</div>
+
+<div class="tab">
+  <button id="btnPrivacy">Privacy</button>
+  <button id="btnGdpr">GDPR</button>
+</div>
+
+
+
+  <div id="trackers" class="section active">
+    <p>No trackers detected yet</p>
+  </div>
+
+  <div id="cookies" class="section">
+    <p>No cookies loaded</p>
+  </div>
+
+  <div id="privacy" class="section">
+    <p>Privacy score: --</p>
+  </div>
+
+  <div id="gdpr" class="section">
+    <p>Generate request soon</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
