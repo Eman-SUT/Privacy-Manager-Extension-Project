@@ -1,0 +1,53 @@
+ body {
+  font-family: Arial, sans-serif;
+  width: 260px;
+  padding: 10px;
+  background: linear-gradient(135deg, #f9f9f9, #e6f0ff);
+}
+
+h3 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.tab {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.tab button {
+  flex: 1;
+  margin: 2px;
+  padding: 8px;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  background: #eee;
+  font-weight: bold;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.tab button:hover {
+  background: #d0d0ff;
+  transform: scale(1.05);
+}
+
+.section {
+  display: none;
+  padding: 10px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+}
+
+.active {
+  display: block;
+}
+
+
+#trackers.active { background: #ffe5e5; }
+#cookies.active { background: #fff0e0; }
+#privacy.active { background: #e5ffe5; }
+#gdpr.active { background: #e5f0ff; } 
+ 
