@@ -4,7 +4,6 @@ import nltk
 from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer
 
-# تحميل الملفات الضرورية لتحليل النصوص
 nltk.download('punkt_tab')
 
 app = Flask(__name__)
@@ -15,13 +14,10 @@ def analyze_privacy():
     data = request.json
     text = data.get('text', '').lower()
 
-    # تحليل النص باستخدام Stemming عشان نتعامل مع كل أشكال الكلمة
-    # مثلاً: tracking, tracked, tracker كلهم هيتحولوا لـ track
     stemmer = PorterStemmer()
     tokens = word_tokenize(text)
     stemmed = [stemmer.stem(w) for w in tokens if w.isalpha()]
 
-    # فئات الخطر مع الـ stems بتاعتها
     risky_categories = {
         "Data Sharing": ["share", "sell", "disclos", "affiliat", "partner", "third"],
         "Tracking":     ["track", "cooki", "beacon", "pixel", "fingerprint", "identifi"],
@@ -29,15 +25,12 @@ def analyze_privacy():
         "Sensitive":    ["locat", "biomet", "contact", "camera", "microphon", "storag"]
     }
 
-    # البحث عن الـ stems في النص وعد التكرار لكل فئة
     found_flags = {}
     for category, stems in risky_categories.items():
         hits = [w for w in stemmed if any(w.startswith(s) for s in stems)]
         if hits:
             found_flags[category] = len(hits)
 
-    # Weighted scoring — كل فئة ليها حد أقصى للخصم عشان السكور يبقى منطقي
-    # Data Sharing أخطر فئة فليها أعلى وزن
     weights = {
         "Data Sharing": 25,
         "Tracking":     20,
@@ -47,7 +40,6 @@ def analyze_privacy():
     deduction = sum(min(count * 5, weights[cat]) for cat, count in found_flags.items())
     score = max(0, 100 - deduction)
 
-    # تحديد الحالة بناءً على السكور
     if score > 80:
         status = "Excellent"
     elif score > 60:
@@ -65,5 +57,4 @@ def analyze_privacy():
     })
 
 if __name__ == '__main__':
-    # تشغيل السيرفر على بورت 5000
     app.run(port=5000, debug=True)
