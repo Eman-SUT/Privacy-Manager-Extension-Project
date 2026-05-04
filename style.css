@@ -1,53 +1,84 @@
- body {
-  font-family: Arial, sans-serif;
-  width: 260px;
-  padding: 10px;
-  background: linear-gradient(135deg, #f9f9f9, #e6f0ff);
+body {
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  width: 320px;
+  padding: 16px;
+  background-color: #ffffff;
+  color: #202124;
+  margin: 0;
 }
 
 h3 {
   text-align: center;
-  color: #333;
-  margin-bottom: 12px;
+  color: #1a73e8;
+  font-size: 18px;
+  margin-top: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e8eaed;
 }
 
-.tab {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
+.tab { display: flex; gap: 8px; margin-bottom: 12px; }
 .tab button {
-  flex: 1;
-  margin: 2px;
-  padding: 8px;
-  cursor: pointer;
-  border: none;
-  border-radius: 6px;
-  background: #eee;
-  font-weight: bold;
-  transition: background 0.3s, transform 0.2s;
+  flex: 1; padding: 8px 4px; cursor: pointer; border: 1px solid #dadce0;
+  border-radius: 4px; background: #ffffff; color: #3c4043; font-size: 13px;
+  font-weight: 500; transition: all 0.2s;
+}
+.tab button:hover, .tab button.active-btn {
+  background-color: #e8f0fe; border-color: #1a73e8; color: #1a73e8;
 }
 
-.tab button:hover {
-  background: #d0d0ff;
-  transform: scale(1.05);
+.section { 
+  display: none; padding: 12px; background: #ffffff; 
+  border: 1px solid #e8eaed; border-radius: 8px; min-height: 120px; 
 }
+.active { display: block; }
 
-.section {
-  display: none;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+.scroll-container { max-height: 200px; overflow-y: auto; }
+.list-container { list-style: none; padding: 0; max-height: 180px; overflow-y: auto; }
+.list-item { padding: 4px 0; font-size: 12px; border-bottom: 1px solid #eee; }
+
+.instruction-text { font-size: 13px; margin-bottom: 8px; }
+.placeholder-text { font-size: 12px; color: #666; text-align: center; }
+.text-blue { color: #1a73e8; font-weight: bold; }
+.site-info { font-size: 11px; color: #666; margin-bottom: 10px; text-align: center; }
+
+.badge-blocked { color: #d93025 !important; float: right; font-weight: bold; }
+.badge-detected, .badge-essential { color: #1a73e8 !important; float: right; font-weight: bold; }
+.cookie-category { font-size: 10px; border: 1px solid; padding: 1px 4px; border-radius: 4px; margin-left: 5px; font-weight: bold; }
+.cookie-value { color: #888; font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.btn-outline-danger, .btn-outline-primary {
+  width: 100%; background-color: white; border-radius: 5px; padding: 10px; 
+  font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;
 }
+.btn-outline-danger { color: #d93025; border: 1px solid #d93025; }
+.btn-outline-primary { color: #1a73e8; border: 1px solid #1a73e8; }
+.btn-outline-primary:hover { background-color: #f1f3f4; }
+.btn-outline-danger:hover { background-color: #fce8e6; }
 
-.active {
-  display: block;
+.switch-container {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #e0e0e0;
 }
+input:checked + .slider { background-color: #1a73e8; }
 
+.nlp-result-box { margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; font-size: 12px; line-height: 1.5; }
 
-#trackers.active { background: #ffe5e5; }
-#cookies.active { background: #fff0e0; }
-#privacy.active { background: #e5ffe5; }
-#gdpr.active { background: #e5f0ff; } 
- 
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 34px;
+  height: 20px;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc; transition: .4s; border-radius: 20px;
+}
+.slider:before {
+  position: absolute; content: "";
+  height: 14px; width: 14px; left: 3px; bottom: 3px;
+  background-color: white; transition: .4s; border-radius: 50%;
+}
+input:checked + .slider { background-color: #1a73e8; }
+input:checked + .slider:before { transform: translateX(14px); }
