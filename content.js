@@ -15,6 +15,17 @@ HTMLCanvasElement.prototype.toDataURL = function(type) {
     return originalToDataURL.apply(this, arguments);
 };
 
+const originalToBlob = HTMLCanvasElement.prototype.toBlob;
+HTMLCanvasElement.prototype.toBlob = function() {
+    const ctx = this.getContext('2d');
+    if (ctx) {
+        const imageData = ctx.getImageData(0, 0, 1, 1);
+        imageData.data[1] ^= 1;
+        ctx.putImageData(imageData, 0, 0);
+    }
+    return originalToBlob.apply(this, arguments);
+};
+
 const originalGetChannelData = AudioBuffer.prototype.getChannelData;
 AudioBuffer.prototype.getChannelData = function() {
     const data = originalGetChannelData.apply(this, arguments);
@@ -23,3 +34,25 @@ AudioBuffer.prototype.getChannelData = function() {
     }
     return data;
 };
+
+const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
+WebGLRenderingContext.prototype.getParameter = function(parameter) {
+    const maskedValues = {
+        37445: "Intel Inc.",
+        37446: "Intel Iris OpenGL Engine"
+    };
+    if (Object.prototype.hasOwnProperty.call(maskedValues, parameter)) {
+        return maskedValues[parameter];
+    }
+    return originalGetParameter.apply(this, arguments);
+};
+
+Object.defineProperty(navigator, "hardwareConcurrency", {
+    get: function() { return 4; },
+    configurable: true
+});
+
+Object.defineProperty(navigator, "deviceMemory", {
+    get: function() { return 8; },
+    configurable: true
+});
