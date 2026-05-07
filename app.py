@@ -1,60 +1,89 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+import re
 import nltk
-from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer
 
-nltk.download('punkt_tab')
 
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/analyze', methods=['POST'])
-def analyze_privacy():
-    data = request.json
-    text = data.get('text', '').lower()
 
-    stemmer = PorterStemmer()
-    tokens = word_tokenize(text)
-    stemmed = [stemmer.stem(w) for w in tokens if w.isalpha()]
+def ensure_nltk_resources():
+    try:
+        nltk.data.find("tokenizers/punkt")
+    except LookupError:
+        nltk.download("punkt", quiet=True)
 
-    risky_categories = {
-        "Data Sharing": ["share", "sell", "disclos", "affiliat", "partner", "third"],
-        "Tracking":     ["track", "cooki", "beacon", "pixel", "fingerprint", "identifi"],
-        "Advertising":  ["advertis", "market", "target", "personal", "promot"],
-        "Sensitive":    ["locat", "biomet", "contact", "camera", "microphon", "storag"]
-    }
 
-    found_flags = {}
-    for category, stems in risky_categories.items():
-        hits = [w for w in stemmed if any(w.startswith(s) for s in stems)]
-        if hits:
-            found_flags[category] = len(hits)
+def extract_flags(text: str):
+    keywords = [
+        "privacy", "data", "personal", "cookies", "tracking", "consent",
+        "gdpr", "retention", "security", "third-party", "share", "delete"
+    ]
+    found = []
+    lower_text = text.lower()
+    for k in keywords:
+        if k in lower_text:
+            found.append(k)
+    return found
 
-    weights = {
-        "Data Sharing": 25,
-        "Tracking":     20,
-        "Advertising":  15,
-        "Sensitive":    20
-    }
-    deduction = sum(min(count * 5, weights[cat]) for cat, count in found_flags.items())
-    score = max(0, 100 - deduction)
 
-    if score > 80:
-        status = "Excellent"
-    elif score > 60:
-        status = "Safe"
-    elif score > 40:
-        status = "Warning"
+def score_policy(text: str):
+    lower_text = text.lower()
+    score = 50
+
+    positive = [
+        ("gdpr", 8),
+        ("consent", 8),
+        ("delete", 8),
+        ("security", 8),
+        ("retention", 6),
+        ("access", 6),
+    ]
+    negative = [
+        ("third-party", 10),
+        ("share", 8),
+        ("tracking", 8),
+        ("advertis", 6),
+    ]
+
+    for token, weight in positive:
+        if token in lower_text:
+            score += weight
+    for token, weight in negative:
+        if token in lower_text:
+            score -= weight
+
+    score = max(0, min(100, score))
+    if score >= 75:
+        status = "Good Privacy Posture"
+    elif score >= 50:
+        status = "Moderate Privacy Risk"
     else:
-        status = "High Risk"
+        status = "High Privacy Risk"
 
+    return score, status
+
+
+@app.route("/analyze", methods=["POST"])
+def analyze():
+    ensure_nltk_resources()
+    payload = request.get_json(silent=True) or {}
+    text = payload.get("text", "")
+    if not isinstance(text, str):
+        return jsonify({"error": "Invalid text"}), 400
+
+    tokens = nltk.word_tokenize(text)
+    cleaned_text = " ".join(tokens) if tokens else re.sub(r"\s+", " ", text)
+
+    score, status = score_policy(cleaned_text)
+    flags = extract_flags(cleaned_text)
     return jsonify({
         "score": score,
-        "flags": [f"{cat} ({cnt} mentions)" for cat, cnt in found_flags.items()],
         "status": status,
-        "total_found": len(found_flags)
+        "flags": flags,
     })
 
-if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=True)
