@@ -1,4 +1,3 @@
-
 function showTab(tabId, btnId) {
     document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
     document.querySelectorAll(".tab button").forEach(btn => btn.classList.remove("active-btn"));
@@ -23,26 +22,28 @@ document.getElementById("btnGdpr").addEventListener("click", () => {
 });
 
 function updateTrackerUI() {
-    chrome.storage.local.get(["trackerList", "isBlockingEnabled"], function(result) {
-        const trackers = result.trackerList || [];
-        const isEnabled = result.isBlockingEnabled || false;
-        const listContainer = document.getElementById("trackerList"); 
-        
-        if (trackers.length > 0) {
-            let statusText = isEnabled ? `Blocked ${trackers.length} Trackers:` : `Detected ${trackers.length} Trackers:`;
-            let html = `<p class="text-blue"> ${statusText}</p>`;
-            
-            html += `<ul class="list-container">`;
-            trackers.forEach(domain => {
-                let badgeClass = isEnabled ? 'badge-blocked' : 'badge-detected';
-                let badgeText = isEnabled ? 'Blocked' : 'Detected';
-                html += `<li class="list-item"> ${domain} <span class="${badgeClass}">${badgeText}</span></li>`;
-            });
-            html += "</ul>";
-            listContainer.innerHTML = html;
-        } else {
-            listContainer.innerHTML = "<p>Safe browsing. No trackers yet!</p>";
-        }
+    chrome.runtime.sendMessage({ type: "GET_TRACKER_LIST" }, (trackerResponse) => {
+        const trackers = trackerResponse?.trackerList || [];
+        chrome.runtime.sendMessage({ type: "GET_BLOCKING_STATE" }, (stateResponse) => {
+            const isEnabled = stateResponse?.isBlockingEnabled || false;
+            const listContainer = document.getElementById("trackerList");
+
+            if (trackers.length > 0) {
+                let statusText = isEnabled ? `Blocked ${trackers.length} Trackers:` : `Detected ${trackers.length} Trackers:`;
+                let html = `<p class="text-blue"> ${statusText}</p>`;
+
+                html += `<ul class="list-container">`;
+                trackers.forEach(domain => {
+                    let badgeClass = isEnabled ? 'badge-blocked' : 'badge-detected';
+                    let badgeText = isEnabled ? 'Blocked' : 'Detected';
+                    html += `<li class="list-item"> ${domain} <span class="${badgeClass}">${badgeText}</span></li>`;
+                });
+                html += "</ul>";
+                listContainer.innerHTML = html;
+            } else {
+                listContainer.innerHTML = "<p>Safe browsing. No trackers yet!</p>";
+            }
+        });
     });
 }
 
@@ -86,24 +87,29 @@ document.getElementById("analyzePolicy").addEventListener("click", async () => {
     const resultDiv = document.getElementById("nlpResult");
     resultDiv.innerHTML = "<p class='text-blue'>Analyzing policy text...</p>";
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
+
     chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => document.body.innerText }, async (results) => {
         try {
             const response = await fetch("http://localhost:5000/analyze", {
-                method: "POST", 
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: results[0].result.substring(0, 8000) })
+                body: JSON.stringify({ text: (results?.[0]?.result || "").substring(0, 8000) })
             });
+
+            if (!response.ok) {
+                throw new Error("Server response failed");
+            }
+
             const data = await response.json();
-            
+
             resultDiv.innerHTML = `
                 <div class="nlp-result-box">
                     <strong class="text-blue">Privacy Score: ${data.score}%</strong><br>
                     <strong>Status:</strong> ${data.status}<br>
                     <strong>Key Terms:</strong> ${data.flags.join(", ") || "None"}
                 </div>`;
-        } catch (e) { 
-            resultDiv.innerHTML = "<p style='color: red;'>Error: Python server is not running!</p>"; 
+        } catch (e) {
+            resultDiv.innerHTML = "<p style='color: red;'>Error: Python server is not running!</p>";
         }
     });
 });
@@ -166,13 +172,15 @@ Regards`
 document.addEventListener('DOMContentLoaded', () => {
     const blockingToggle = document.getElementById("blockingToggle");
     
-    chrome.storage.local.get(["isBlockingEnabled"], (result) => { 
-        blockingToggle.checked = result.isBlockingEnabled || false; 
+    chrome.runtime.sendMessage({ type: "GET_BLOCKING_STATE" }, (response) => {
+        blockingToggle.checked = response?.isBlockingEnabled || false;
     });
 
     blockingToggle.addEventListener("change", () => {
-        chrome.storage.local.set({ "isBlockingEnabled": blockingToggle.checked });
-        updateTrackerUI();
+        chrome.runtime.sendMessage(
+            { type: "SET_BLOCKING_STATE", isBlockingEnabled: blockingToggle.checked },
+            () => updateTrackerUI()
+        );
     });
 
     showTab("trackers", "btnTrackers");
