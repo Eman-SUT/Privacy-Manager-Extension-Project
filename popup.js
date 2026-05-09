@@ -14,11 +14,15 @@ document.getElementById("btnCookies").addEventListener("click", () => {
     updateCookiesUI(); 
 });
 document.getElementById("btnPrivacy").addEventListener("click", () => {
-    showTab("privacy", "btnPrivacy")
+    showTab("privacy", "btnPrivacy");
 });
 document.getElementById("btnGdpr").addEventListener("click", () => { 
     showTab("gdpr", "btnGdpr"); 
     updateGdprUI(); 
+});
+document.getElementById("btnInventory").addEventListener("click", () => {
+    showTab("inventory", "btnInventory");
+    updateInventoryUI();
 });
 
 function updateTrackerUI() {
@@ -90,15 +94,25 @@ document.getElementById("analyzePolicy").addEventListener("click", async () => {
 
     chrome.scripting.executeScript({ target: { tabId: tab.id }, func: () => document.body.innerText }, async (results) => {
         try {
+            const pageText = (results?.[0]?.result || "");
+
+            // تحقق إن الصفحة privacy policy فعلاً
+            const privacyKeywords = ["privacy", "policy", "data", "personal", "collect", "gdpr"];
+            const lowerText = pageText.toLowerCase();
+            const matchCount = privacyKeywords.filter(k => lowerText.includes(k)).length;
+
+            if (matchCount < 3) {
+                resultDiv.innerHTML = "<p style='color: orange;'>This page doesn't appear to be a privacy policy. Please navigate to the site's Privacy Policy page first.</p>";
+                return;
+            }
+
             const response = await fetch("http://localhost:5000/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: (results?.[0]?.result || "").substring(0, 8000) })
+                body: JSON.stringify({ text: pageText.substring(0, 8000) })
             });
 
-            if (!response.ok) {
-                throw new Error("Server response failed");
-            }
+            if (!response.ok) throw new Error("Server response failed");
 
             const data = await response.json();
 
@@ -167,6 +181,78 @@ Regards`
 
     container.appendChild(sarBtn);
     container.appendChild(delBtn);
+}
+
+async function updateInventoryUI() {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab || !tab.url.startsWith('http')) return;
+
+    const hostname = new URL(tab.url).hostname;
+    const inventoryList = document.getElementById("inventoryList");
+
+    chrome.cookies.getAll({ domain: hostname }, function(cookies) {
+        const dataCategories = [];
+
+        const trackingCookies = cookies.filter(c =>
+            c.name.includes('_ga') || c.name.includes('_gid') ||
+            c.name.includes('ads') || c.name.includes('track')
+        );
+
+        if (trackingCookies.length > 0) {
+            dataCategories.push({
+                category: "Behavioral Data",
+                description: "Tracks your browsing behavior and interests",
+                source: trackingCookies.map(c => c.name).join(", "),
+                risk: "high"
+            });
+        }
+
+        if (cookies.some(c => c.name.includes('session') || c.name.includes('user') || c.name.includes('id'))) {
+            dataCategories.push({
+                category: "Identity Data",
+                description: "Identifies you as a unique user on this site",
+                source: "Session & user cookies",
+                risk: "medium"
+            });
+        }
+
+        if (cookies.some(c => c.name.includes('lang') || c.name.includes('locale') || c.name.includes('pref'))) {
+            dataCategories.push({
+                category: "Preference Data",
+                description: "Stores your settings and preferences",
+                source: "Preference cookies",
+                risk: "low"
+            });
+        }
+
+        chrome.runtime.sendMessage({ type: "GET_TRACKER_LIST" }, (response) => {
+            const trackers = response?.trackerList || [];
+            if (trackers.length > 0) {
+                dataCategories.push({
+                    category: "Tracking Pixels & APIs",
+                    description: "Third-party trackers collecting data about your visit",
+                    source: trackers.slice(0, 3).join(", ") + (trackers.length > 3 ? ` +${trackers.length - 3} more` : ""),
+                    risk: "high"
+                });
+            }
+
+            if (dataCategories.length === 0) {
+                inventoryList.innerHTML = "<p>No personal data collection detected on this site.</p>";
+                return;
+            }
+
+            inventoryList.innerHTML = dataCategories.map(item => `
+                <div class="inventory-item risk-${item.risk}">
+                    <div class="inventory-header">
+                        <strong>${item.category}</strong>
+                        <span class="risk-badge risk-${item.risk}">${item.risk.toUpperCase()} RISK</span>
+                    </div>
+                    <p class="inventory-desc">${item.description}</p>
+                    <small>Source: ${item.source}</small>
+                </div>
+            `).join('');
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
