@@ -1,48 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Privacy Guard</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h3>Privacy Guard</h3>
-  
+  <h2 class="app-title">Privacy Guard</h2>
   <div class="tab">
     <button id="btnTrackers" class="active-btn">Trackers</button>
     <button id="btnCookies">Cookies</button>
-  </div>
-  <div class="tab">
     <button id="btnPrivacy">NLP Analysis</button>
     <button id="btnGdpr">GDPR SAR</button>
+    <button id="btnInventory">Data Inventory</button>
   </div>
 
   <div id="trackers" class="section active">
     <div class="switch-container">
-      <span class="switch-label">Enable Blocking</span>
+      <span>Tracker Blocking</span>
       <label class="switch">
-        <input type="checkbox" id="blockingToggle">
+        <input type="checkbox" id="blockingToggle"/>
         <span class="slider"></span>
       </label>
     </div>
-    <div id="trackerList">Safe browsing. No trackers yet!</div>
+    <div id="trackerList"></div>
   </div>
 
   <div id="cookies" class="section">
-    <div id="cookieList" class="scroll-container"></div>
     <button id="clearCookies" class="btn-outline-danger">Clear All Cookies</button>
+    <div id="cookieList"></div>
   </div>
 
   <div id="privacy" class="section">
-    <p class="instruction-text">Analyze current page Privacy Policy:</p>
-    <button id="analyzePolicy" class="btn-outline-primary">Extract & Analyze Terms</button>
-    <div id="nlpResult">--</div>
+    <p>Analyze current page Privacy Policy:</p>
+    <button id="analyzePolicy" class="btn-outline-primary">Extract &amp; Analyze Terms</button>
+    <div id="nlpResult"></div>
   </div>
 
   <div id="gdpr" class="section">
-    <div id="gdprOptions">
-      <p class="placeholder-text">Select a GDPR request type to copy template.</p>
-    </div>
+    <div id="gdprOptions"></div>
+  </div>
+
+  <div id="inventory" class="section">
+    <h3>Personal Data Inventory</h3>
+    <p class="inventory-desc">Data categories detected on this site:</p>
+    <div id="inventoryList"></div>
   </div>
 
   <script src="popup.js"></script>
