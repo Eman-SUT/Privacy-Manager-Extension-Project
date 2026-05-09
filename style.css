@@ -82,3 +82,40 @@ input:checked + .slider { background-color: #1a73e8; }
 }
 input:checked + .slider { background-color: #1a73e8; }
 input:checked + .slider:before { transform: translateX(14px); }
+
+.inventory-item {
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 4px solid #ccc;
+    background: #f9f9f9;
+}
+
+.inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.risk-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+    color: white;
+}
+
+.risk-high { border-left-color: #e74c3c; }
+.risk-medium { border-left-color: #f39c12; }
+.risk-low { border-left-color: #2ecc71; }
+
+.risk-badge.risk-high { background: #e74c3c; }
+.risk-badge.risk-medium { background: #f39c12; }
+.risk-badge.risk-low { background: #2ecc71; }
+
+.inventory-desc {
+    font-size: 11px;
+    color: #666;
+    margin: 4px 0;
+}
