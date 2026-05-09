@@ -1,58 +1,72 @@
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "getPageText") {
-        sendResponse({ text: document.body.innerText });
-    }
-});
 
-const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-HTMLCanvasElement.prototype.toDataURL = function(type) {
-    const ctx = this.getContext('2d');
-    if (ctx) {
-        const imageData = ctx.getImageData(0, 0, 1, 1);
-        imageData.data[0] ^= 1;
-        ctx.putImageData(imageData, 0, 0);
-    }
-    return originalToDataURL.apply(this, arguments);
-};
+function applyFingerprintingProtection() {
 
-const originalToBlob = HTMLCanvasElement.prototype.toBlob;
-HTMLCanvasElement.prototype.toBlob = function() {
-    const ctx = this.getContext('2d');
-    if (ctx) {
-        const imageData = ctx.getImageData(0, 0, 1, 1);
-        imageData.data[1] ^= 1;
-        ctx.putImageData(imageData, 0, 0);
-    }
-    return originalToBlob.apply(this, arguments);
-};
+  const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+  const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
+  const originalToBlob = HTMLCanvasElement.prototype.toBlob;
 
-const originalGetChannelData = AudioBuffer.prototype.getChannelData;
-AudioBuffer.prototype.getChannelData = function() {
-    const data = originalGetChannelData.apply(this, arguments);
-    for (let i = 0; i < data.length; i += 100) {
-        data[i] += Math.random() * 0.0001;
+  HTMLCanvasElement.prototype.toDataURL = function(...args) {
+    const context = this.getContext("2d");
+    if (context) {
+      const imageData = originalGetImageData.call(context, 0, 0, this.width, this.height);
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        imageData.data[i] ^= 1;
+      }
+      context.putImageData(imageData, 0, 0);
     }
-    return data;
-};
+    return originalToDataURL.apply(this, args);
+  };
 
-const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
-WebGLRenderingContext.prototype.getParameter = function(parameter) {
-    const maskedValues = {
-        37445: "Intel Inc.",
-        37446: "Intel Iris OpenGL Engine"
+  HTMLCanvasElement.prototype.toBlob = function(callback, ...args) {
+    const context = this.getContext("2d");
+    if (context) {
+      const imageData = originalGetImageData.call(context, 0, 0, this.width, this.height);
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        imageData.data[i] ^= 1;
+      }
+      context.putImageData(imageData, 0, 0);
+    }
+    return originalToBlob.call(this, callback, ...args);
+  };
+
+  const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
+  WebGLRenderingContext.prototype.getParameter = function(parameter) {
+    // UNMASKED_VENDOR_WEBGL
+    if (parameter === 37445) return "Generic Vendor";
+    // UNMASKED_RENDERER_WEBGL
+    if (parameter === 37446) return "Generic Renderer";
+    return originalGetParameter.call(this, parameter);
+  };
+
+  const originalCreateAnalyser = AudioContext.prototype.createAnalyser;
+  AudioContext.prototype.createAnalyser = function() {
+    const analyser = originalCreateAnalyser.call(this);
+    const originalGetFloatFrequencyData = analyser.getFloatFrequencyData.bind(analyser);
+    analyser.getFloatFrequencyData = function(array) {
+      originalGetFloatFrequencyData(array);
+      for (let i = 0; i < array.length; i++) {
+        array[i] += (Math.random() - 0.5) * 0.1;
+      }
     };
-    if (Object.prototype.hasOwnProperty.call(maskedValues, parameter)) {
-        return maskedValues[parameter];
-    }
-    return originalGetParameter.apply(this, arguments);
-};
+    return analyser;
+  };
 
-Object.defineProperty(navigator, "hardwareConcurrency", {
-    get: function() { return 4; },
-    configurable: true
-});
+  const spoofedProperties = {
+    hardwareConcurrency: 4,
+    deviceMemory: 8,
+    platform: "Win32",
+  };
 
-Object.defineProperty(navigator, "deviceMemory", {
-    get: function() { return 8; },
-    configurable: true
-});
+  for (const [prop, value] of Object.entries(spoofedProperties)) {
+    try {
+      Object.defineProperty(navigator, prop, {
+        get: () => value,
+        configurable: true,
+      });
+    } catch (e) {}
+  }
+
+  console.log("[Privacy Guard] Fingerprinting protection active.");
+}
+
+applyFingerprintingProtection();
